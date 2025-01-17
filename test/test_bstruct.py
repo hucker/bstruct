@@ -1,141 +1,63 @@
-import pytest
-import struct
+
 import bstruct
+import struct
+import pytest
+
+@pytest.mark.parametrize(
+    "human_readable_format,expected_bstruct_format",
+    [
+        ("native 2*s p", "=2sp"),
+        ("big_endian 3*int32 3*float", ">3i3f"),
+        ("little_endian 2*bool 3*padding 30*s 2*uint32", "<2?3x30s2I"),
+        ("native 2*int16 padding", "=2hx"),
+        ("big_endian 2*byte", ">2b"),
+        ("little_endian 2*ubyte", "<2B"),
+        ("native int32", "=i"),
+        ("big_endian 2*uint32", ">2I"),
+        ("big_endian float", ">f"),
+        ("little_endian double", "<d"),
+        ("native int64", "=q"),
+        ("big_endian uint64", ">Q"),
+        ("little_endian char", "<c"),
+        ("native 10*s", "=10s"),
+        ("big_endian 3*padding", ">3x"),
+        ("little_endian p", "<p"),
+        ("native P", "=P"),
+        ("big_endian bool byte", ">?b"),
+        ("little_endian int16 int32", "<hi"),
+        ("native int32 float", "=if"),
+        ("big_endian double int64", ">dq"),
+        ("little_endian s p", "<sp"),
+        ("native P 3*padding", "=P3x"),
+        ("big_endian uint64 4*s", ">Q4s"),
+        ("little_endian 5*uint16 ubyte", "<5HB"),
+        ("native double int16 padding", "=dhx"),
+        ("big_endian 4*bool byte", ">4?b"),
+        ("little_endian int32 int16", "<ih"),
+        ("native uint32 uint16", "=IH"),
+        ("big_endian 2*int64 2*uint64", ">2q2Q"),
+        ("little_endian uint32 int32","<Ii"),
+        ("native 3*float double", "=3fd"),
+        ("big_endian 20*p 21*P", ">20p21P"),
+        ("little_endian padding ubyte", "<xB"),
+        ("native bool padding", "=?x"),
+        ("big_endian byte int16", ">bh"),
+        ("little_endian int16 padding", "<hx"),
+
+        ("big_endian P 3*padding", ">P3x"),
+    ])
+def test_compile_format_string(human_readable_format, expected_bstruct_format):
+    bs = bstruct.StructLib(human_readable_format)
+    result = bs.format
+    assert result == expected_bstruct_format
 
 
-@pytest.mark.parametrize("instance, type", [
-    (bstruct.Int8(), bstruct.Int8),
-    (bstruct.UInt8(), bstruct.UInt8),
-    (bstruct.Int16(), bstruct.Int16),
-    (bstruct.UInt16(), bstruct.UInt16),
-    (bstruct.Int32(), bstruct.Int32),
-    (bstruct.UInt32(), bstruct.UInt32),
-    (bstruct.Int64(), bstruct.Int64),
-    (bstruct.UInt64(), bstruct.UInt64),
-])
-def test_int_types(instance, type):
-    assert isinstance(instance, type)
+def test_round_trip():
+    format_fields = "little_endian bool float double ubyte byte uint16 int16 uint32 int32 uint64 int64"
+    expected_format = "<?fdBbHhIiQq"
 
-
-def test_float_types():
-    assert isinstance(bstruct.Float(), bstruct.Float)
-    assert isinstance(bstruct.Double(), bstruct.Double)
-    assert isinstance(bstruct.Half(),bstruct.Half)
-
-
-def test_string_type():
-    s = bstruct.String(10)
-    assert isinstance(s,bstruct.String)
-    assert s.size == 10
-
-@pytest.mark.parametrize("size", [ 0,-1,-100])
-def test_bad_string(size):
-    # The smallest string should have a single null character so 0 or less is invalid
-    with pytest.raises(ValueError):
-        _ = bstruct.String(size)
-
-
-@pytest.mark.parametrize("byte_order, expected", [
-    (bstruct.ByteOrder.NATIVE_ORDER, '='),
-    (bstruct.ByteOrder.LITTLE_ENDIAN, '<'),
-    (bstruct.ByteOrder.BIG_ENDIAN, '>'),
-    (bstruct.ByteOrder.NETWORK_ORDER, '!'),
-])
-def test_byteorder(byte_order, expected):
-    assert byte_order.value == expected
-
-@pytest.mark.parametrize("format_cls, expected_fmt, expected_size", [
-    (bstruct.Char, 'c', 1),
-    (bstruct.Bool_, '?', 1),
-    (bstruct.Half, 'e', 2),
-    (bstruct.Float, 'f', 4),
-    (bstruct.Double, 'd', 8),
-    (bstruct.Int8, 'b', 1),
-    (bstruct.UInt8, 'B', 1),
-    (bstruct.Int16, 'h', 2),
-    (bstruct.UInt16, 'H', 2),
-    (bstruct.Int32, 'i', 4),
-    (bstruct.UInt32, 'I', 4),
-    (bstruct.Int64, 'q', 8),
-    (bstruct.UInt64, 'Q', 8),
-])
-def test_format_attributes(format_cls, expected_fmt, expected_size):
-    instance = format_cls()
-    assert instance.fmt == expected_fmt
-    assert instance.size == expected_size
-
-
-@pytest.mark.parametrize("byte_order,fields,expected_format", [
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [bstruct.String(10), bstruct.Char()], "<10sc"),
-    (bstruct.ByteOrder.BIG_ENDIAN, [bstruct.String(10), bstruct.Bool_()], ">10s?"),
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [bstruct.Char(), bstruct.Half(), bstruct.Float()], "<cef"),
-    (bstruct.ByteOrder.BIG_ENDIAN, [bstruct.Float(), bstruct.Char(), bstruct.Double()], ">fcd"),
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [bstruct.UInt8(), bstruct.UInt16(), bstruct.UInt32()], "<BHI"),
-    (bstruct.ByteOrder.BIG_ENDIAN, [bstruct.Int8(), bstruct.Char(), bstruct.UInt16()], ">bcH"),
-
-    # Tests for different types of byte ordering
-    (bstruct.ByteOrder.NATIVE_ORDER, [bstruct.String(10)], "=10s"),
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [bstruct.String(10)], "<10s"),
-    (bstruct.ByteOrder.BIG_ENDIAN, [bstruct.String(10)], ">10s"),
-    (bstruct.ByteOrder.NETWORK_ORDER, [bstruct.String(10)], "!10s"),
-
-    # Same thing with some number types
-    (bstruct.ByteOrder.NATIVE_ORDER, [bstruct.UInt32()], "=I"),
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [bstruct.String(10)], "<10s"),
-    (bstruct.ByteOrder.BIG_ENDIAN, [bstruct.String(10)], ">10s"),
-    (bstruct.ByteOrder.NETWORK_ORDER, [bstruct.String(10)], "!10s"),
-
-    # testing BinaryStruct with all data types
-    (bstruct.ByteOrder.LITTLE_ENDIAN, [
-        bstruct.String(10),
-        bstruct.Char(),
-        bstruct.Bool_(),
-        bstruct.Half(),
-        bstruct.Float(),
-        bstruct.Double(),
-        bstruct.UInt8(),
-        bstruct.Int8(),
-        bstruct.UInt16(),
-        bstruct.Int16(),
-        bstruct.UInt32(),
-        bstruct.Int32(),
-        bstruct.UInt64(),
-        bstruct.Int64()
-    ], "<10sc?efdBbHhIiQq")
-])
-def test_binary_struct(byte_order, fields, expected_format):
-    bs = bstruct.BinaryStruct(byte_order=byte_order, fields=fields)
-    assert bs.struct_format == expected_format
-
-
-
-#Everything above this point tests that we can make a nice type string for the struct module
-
-# Now we need to do a full "system test" to show that we are calling the underlying
-# Struct module.  The idea is if our code makes the right format string, then  we should be good
-# to go since this is a passthrough....
-
-def test_integration_test_numerics():
-    byte_order = bstruct.ByteOrder.LITTLE_ENDIAN
-    field_types = [
-        bstruct.Bool_(),
-        bstruct.Half(),
-        bstruct.Float(),
-        bstruct.Double(),
-        bstruct.UInt8(),
-        bstruct.Int8(),
-        bstruct.UInt16(),
-        bstruct.Int16(),
-        bstruct.UInt32(),
-        bstruct.Int32(),
-        bstruct.UInt64(),
-        bstruct.Int64()
-    ]
-    expected_type = "<?efdBbHhIiQq"
-
-    # Here initialize some usefuldata
+    # Initialize some useful data
     b = 1
-    half = 1.5 # Note that we use binary fraction floating point numbers .5,.25, .125, .0625 etc
     f = 2.25
     d = 3.125
     u8 = 255
@@ -146,16 +68,46 @@ def test_integration_test_numerics():
     i32 = -2147483648
     u64 = 18446744073709551615
     i64 = -9223372036854775808
-    bs = bstruct.BinaryStruct(byte_order,field_types)
+    bs = bstruct.StructLib(format_fields)
 
-    values = [b, half, f, d, u8, i8, u16, i16, u32, i32, u64, i64]
+    assert bs.format == expected_format
+
+    data = [b, f, d, u8, i8, u16,i16,u32,i32, u64, i64]
 
     # Use the bstruct class to pack and unpack the data fields
-    packed_data = bs.pack(*values)
+    packed_data = bs.pack(*data)
     unpacked_data = bs.unpack(packed_data)
 
     # Now use the baseline
-    ex_packed = struct.pack(expected_type, *values)
-    ex_unpacked_data = struct.unpack(expected_type,ex_packed)
+    expected_packed = struct.pack(expected_format, *data)
+    expected_unpacked_data = struct.unpack(expected_format, expected_packed)
 
-    assert unpacked_data == ex_unpacked_data
+    assert unpacked_data == expected_unpacked_data
+
+
+@pytest.mark.parametrize(
+    "format_fields, expected_format, data",
+    [
+        ("little_endian bool float double ubyte byte uint16 int16 uint32 int32 uint64 int64", "<?fdBbHhIiQq",
+         [1, 2.25, 3.125, 255, -128, 65535, -32768, 4294967295, -2147483648, 18446744073709551615,
+          -9223372036854775808]),
+        ("ubyte byte uint16 int16 uint32 int32 uint64 int64", "BbHhIiQq",
+         [255, -128, 65535, -32768, 4294967295, -2147483648, 18446744073709551615, -9223372036854775808]),
+        ("float double", "fd", [2.25, 3.125]),
+        ("bool ubyte byte uint16 int16", "?BbHh", [1, 255, -128, 65535, -32768]),
+    ],
+)
+def test_round_trip(format_fields, expected_format, data):
+    bs = bstruct.StructLib(format_fields)
+
+    assert bs.format == expected_format
+
+    # Use the bstruct class to pack and unpack the data fields
+    packed_data = bs.pack(*data)
+    unpacked_data = bs.unpack(packed_data)
+
+    # Now use the baseline
+    expected_packed = struct.pack(expected_format, *data)
+    expected_unpacked_data = struct.unpack(expected_format, expected_packed)
+
+    assert unpacked_data == expected_unpacked_data
