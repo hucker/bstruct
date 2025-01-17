@@ -1,10 +1,25 @@
+"""
+Test the thin wrapper around the struct module.  The intent of these tests is to make sure that
+the thin wrapper around struct works as expected.  I'm not trying to test struct, I'm trying to make
+sure that my code converts the single character binary data packet into a string that can be passed
+the struct module.
+
+
+For the most part these tests very that I can do all sorts of things with all the support types
+and my mappings for those types.  Once that works I very that my code gets the same answer as struct
+pack and unpack.  I am not trying to validate struct and assume that it just works.
+
+
+"""
 
 import bstruct
 import struct
 import pytest
 
+@pytest.mark.parametrize('struct_byte_order, bstruct_byte_order',
+                         [("<", "little_endian"), (">", "big_endian"), ("=", "native"), ("!", "network")])
 @pytest.mark.parametrize(
-    "format_field_structure, expected_bstruct_structure",
+    "bstruct_format_field, expected_bstruct_structure",
     [
         ("2*s p", "2sp"),
         ("3*int32 3*float", "3i3f"),
@@ -45,51 +60,66 @@ import pytest
         ("byte int16", "bh"),
         ("int16 padding", "hx"),
     ])
-def test_compile_format_string(format_field_structure, expected_bstruct_structure):
-    """Test that the various datatypes get the right format string for each byte ordering"""
-    byte_orders = {"<":"little_endian", ">":"big_endian","=":"native","!":"network"}
+def test_compile_format_string(struct_byte_order, bstruct_byte_order,
+                               bstruct_format_field, expected_bstruct_structure):
+    """Test that the various datatypes get the correct format string for each byte ordering
 
-    for symbol,order in byte_orders.items():
-        human_readable_format = f"{order} {format_field_structure}"
-        expected_bstruct_format = f"{symbol}{expected_bstruct_structure}"
-        bs = bstruct.StructLib(human_readable_format)
-        bs_format = bs.format
-        assert bs_format == expected_bstruct_format
+    Args:
+        struct_byte_order: The byte order symbol used in struct.
+        bstruct_byte_order: The byte order name used in bstruct.
+        bstruct_format_field: The format field used in bstruct.
+        expected_bstruct_structure: The expected structure format in bstruct including byte order.
+    """
 
-@pytest.mark.parametrize('symbol, order',
+    bstruct_format_with_order = f"{bstruct_byte_order} {bstruct_format_field}"
+    expected_struct_format_full = f"{struct_byte_order}{expected_bstruct_structure}"
+    bs = bstruct.StructLib(bstruct_format_with_order)
+    actual_struct_format_full = bs.format
+    assert actual_struct_format_full == expected_struct_format_full
+
+@pytest.mark.parametrize('struct_byte_order, bstruct_byte_order',
                          [("<", "little_endian"), (">", "big_endian"), ("=", "native"), ("!", "network")])
-def test_round_trip2(symbol, order):
+def test_round_trip2(struct_byte_order, bstruct_byte_order):
+    """Test if data can make a round trip - packaged and unpackaged back and forth.
 
-    format_fields = f"{order} bool float double ubyte byte uint16 int16 uint32 int32 uint64 int64"
-    expected_format = f"{symbol}?fdBbHhIiQq"
+    Args:
+        struct_byte_order: The byte order as used by struct.
+        bstruct_byte_order: The byte order as used by bstruct.
+    """
+
+    bstruct_format = f"{bstruct_byte_order} bool float double ubyte byte uint16 int16 uint32 int32 uint64 int64"
+    expected_struct_format = f"{struct_byte_order}?fdBbHhIiQq"
 
     # Initialize some useful data
-    b = 1
-    f = 2.25
-    d = 3.125
-    u8 = 255
-    i8 = -128
-    u16 = 65535
-    i16 = -32768
-    u32 = 4294967295
-    i32 = -2147483648
-    u64 = 18446744073709551615
-    i64 = -9223372036854775808
-    bs = bstruct.StructLib(format_fields)
+    test_bool = 1
+    test_float = 2.25
+    test_double = 3.125
+    test_ubyte = 255
+    test_byte = -128
+    test_uint16 = 65535
+    test_int16 = -32768
+    test_uint32 = 4294967295
+    test_int32 = -2147483648
+    test_uint64 = 18446744073709551615
+    test_int64 = -9223372036854775808
 
-    assert bs.format == expected_format
+    bs = bstruct.StructLib(bstruct_format)
 
-    data = [b, f, d, u8, i8, u16,i16,u32,i32, u64, i64]
+    assert bs.format == expected_struct_format
+
+    data = [test_bool, test_float, test_double, test_ubyte, test_byte, test_uint16, test_int16, test_uint32,
+            test_int32, test_uint64, test_int64]
 
     # Use the bstruct class to pack and unpack the data fields
-    packed_data = bs.pack(*data)
-    unpacked_data = bs.unpack(packed_data)
+    packed_data_by_bs = bs.pack(*data)
+    unpacked_data_by_bs = bs.unpack(packed_data_by_bs)
 
-    # Now use the baseline
-    expected_packed = struct.pack(expected_format, *data)
-    expected_unpacked_data = struct.unpack(expected_format, expected_packed)
+    # Now use the baseline struct for packing and unpacking
+    packed_data_by_struct = struct.pack(expected_struct_format, *data)
+    unpacked_data_by_struct = struct.unpack(expected_struct_format, packed_data_by_struct)
 
-    assert unpacked_data == expected_unpacked_data
+    # The unpacked data by bstruct and struct should be the same
+    assert unpacked_data_by_bs == unpacked_data_by_struct
 
 
 
@@ -170,3 +200,44 @@ def test_strings2(bstruct_byte_order, struct_byte_order, bstruct_format, struct_
     expected_unpacked_data = struct.unpack(struct_byte_order + struct_format, expected_packed)
 
     assert unpacked_data == expected_unpacked_data
+
+@pytest.mark.parametrize('bstruct_byte_order, struct_byte_order',
+                         [("little_endian", "<"),
+                          ("big_endian", ">"),
+                          ("native", "="),
+                          ("network", "!"),
+                          ])
+@pytest.mark.parametrize('bstruct_format, struct_format, data',
+                         [("10*p", "10p", [b'hello']),
+                          ("20*p 20*p", "20p20p", [b'abcd123', b'hello']),
+                          ])
+def test_pascal_strings(bstruct_byte_order, struct_byte_order, bstruct_format, struct_format, data):
+    """Test for Pascal strings with various byte orders and formats.
+
+    It seems that you've embarked on quite the unique journey! Testing Pascal strings
+    in Python, are we? I'm convinced that even the creator of Python wouldn't have seen this
+    one coming. It's as if you've opened a coding time capsule from the era of frizzy hair,
+    disco music, and the Pascal peak! Keep going; you might be the sole torchbearer keeping
+    the Pascal string legacy alive in the 21st century.
+
+    Args:
+        bstruct_byte_order: The byte order used in bstruct.
+        struct_byte_order: The byte order used in struct.
+        bstruct_format: The format used in bstruct.
+        struct_format: The format expected to be used in struct.
+        data: The data to be packed and unpacked.
+    """
+
+    bs = bstruct.StructLib(bstruct_byte_order + " " + bstruct_format)
+
+    assert bs.format == struct_byte_order + struct_format
+
+    # Use the bstruct class to pack and unpack the data fields
+    packed_data_by_bs = bs.pack(*data)
+    unpacked_data_by_bs = bs.unpack(packed_data_by_bs)
+
+    # Now use the struct library for comparison
+    packed_data_by_struct = struct.pack(struct_byte_order + struct_format, *data)
+    unpacked_data_by_struct = struct.unpack(struct_byte_order + struct_format, packed_data_by_struct)
+
+    assert unpacked_data_by_bs == unpacked_data_by_struct
