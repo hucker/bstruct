@@ -5,6 +5,7 @@ class StructLib:
 
     def __init__(self,human_readable_format:str):
         self.format = self.human_readable_fmt(human_readable_format)
+        self.human_format = human_readable_format
 
     def pack(self,*data)->bytes:
         return struct.pack(self.format,*data)
@@ -30,6 +31,7 @@ class StructLib:
             "char": "c",
             "s": "s",
             "string":"s",
+            "str":"s",
             "p": "p",
             "pascal":"p",
             "P": "P",
