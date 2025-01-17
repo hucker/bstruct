@@ -1,7 +1,13 @@
 """
 Wrapper around the struct module to provide a better developer experience.
 
-The speed of this code should be ever so slightly slower because
+The intent of this module is not to make a "clean OO interface" where we have
+objects with lots of features.  If we are converting binary data we want to
+leverage the struct module's C code and not have a bunch of "slow" python
+bit twiddling.  So I'm willing to be "slow" setting things up to make the
+the format string that the struct module needs, using OO and types that
+modern editors like, but when we pass data to be converted it is just
+passed straight through to struct.
 
 """
 
@@ -9,6 +15,7 @@ import struct
 from typing import Tuple
 from enum import Enum
 
+# These are what we handle for now
 BinaryType = int | float | str | bool | bytes
 
 
