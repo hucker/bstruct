@@ -6,10 +6,11 @@ The speed of this code should be ever so slightly slower because
 """
 
 import struct
-
+from typing import Tuple
 from enum import Enum
 
 BinaryType = int | float | str | bool | bytes
+
 
 class ByteOrder(Enum):
     LITTLE_ENDIAN = '<'
@@ -23,7 +24,7 @@ class ByteOrder(Enum):
 
 
 class Format:
-    def __init__(self, fmt: str, size: int = 1, byte_order:ByteOrder=ByteOrder.BIG_ENDIAN):
+    def __init__(self, fmt: str, size: int = 1, byte_order: ByteOrder = ByteOrder.BIG_ENDIAN):
         self.fmt = fmt
         self.size = size
         self.byte_order = byte_order
@@ -40,11 +41,13 @@ class Format:
 class String(Format):
     """A class to handle fixed-size string format."""
 
-    def __init__(self, size: int,fill=b'\x00'):
+    def __init__(self, size: int, fill=b'\x00'):
         """
         Args:
             size (int): Size of the string (in bytes).
         """
+        if size <= 1:
+            raise ValueError(f'Size for string ({size}) must be greater than 1.')
         self.fill = fill
         super().__init__(f'{size}s', size)
 
@@ -73,16 +76,19 @@ class String(Format):
         """
         return super().unpack(packed_data).decode('utf-8').rstrip('\x00')
 
+
 class PascalString(Format):
+    """TODO: This hasn't been implemented and tested yet."""
+
     def __init__(self):
         import warnings
-        warnings.warn('Pascal String Not Supported',DeprecationWarning,stacklevel=2)
+        warnings.warn('Pascal String Not Supported', DeprecationWarning, stacklevel=2)
         super().__init__('p', 2)
 
-    def pack(self, value: str,truncate=False):
+    def pack(self, value: str, truncate=False):
         # Ensure the string length is less than 255
         if truncate:
-            value=value[:254]
+            value = value[:254]
 
         elif len(value) >= 255:
             raise ValueError(f"String too long ({len(value)}) to pack as Pascal String. Limit=255")
@@ -109,11 +115,13 @@ class Char(Format):
     def __init__(self):
         super().__init__('c', 1)
 
-class _Bool(Format):
+
+class Bool_(Format):
     """A class to handle unsigned boolean values."""
 
     def __init__(self):
         super().__init__('?', 1)
+
 
 class Half(Format):
     """A class to handle half precision floats."""
@@ -121,17 +129,20 @@ class Half(Format):
     def __init__(self):
         super().__init__('e', 2)
 
+
 class Float(Format):
     """A class to handle float format."""
 
     def __init__(self):
         super().__init__('f', 4)
 
+
 class Double(Format):
     """A class to handle double precision floats format."""
 
     def __init__(self):
         super().__init__('d', 8)
+
 
 class UInt8(Format):
     """A class to handle unsigned 8-bit integer format."""
@@ -192,6 +203,19 @@ class UInt64(Format):
 class BinaryStruct:
 
     def __init__(self, byte_order: ByteOrder, fields: list[Format]):
+        """
+        Initialize class with the byte ordering and a list of Format field classes.
+
+        The list of fields is used to make a format string usable by the underlying
+        struct class fields that are created using a string with types encoded into
+        single character type ID's.  While this worked back in the day, you would need
+        to have the type characters memorized in order to be sure you were correct.
+
+        With the binary struct, you  build the string from python Format objects.
+
+        This is a more verbose, but has the benefit of enabling the IDE to verify types.
+        """
+
         self.byte_order: ByteOrder = byte_order
         self.fields = fields
 
@@ -212,45 +236,84 @@ class BinaryStruct:
     def unpack(self, packed_data: bytes) -> list[BinaryType]:
         raw_result = struct.unpack(self.struct_format, packed_data)
         # Convert bytes back to string and strip null characters
-        result = [r.decode('utf-8').rstrip('\0') if isinstance(r, bytes) else r for r in raw_result]
+        result = (r.decode('utf-8').rstrip('\0') if isinstance(r, bytes) else r for r in raw_result)
 
-        return result
+        return tuple(result)
 
 
-def as_ascii(bytes_obj, fill_char:str= '.'):
-    hex_dump = " ".join(f"{b:02x}" for b in bytes_obj)
-    ascii_chars = []
-    for b in bytes_obj:
-        if 32 <= b <= 126:  # printable ASCII range
-            ascii_chars.append(chr(b))
-        else:
-            ascii_chars.append(fill_char)
+def as_ascii(bytes_obj: bytes, fill_char: str = '.', hex_fmt: str = '{:02X}') -> Tuple[str, str]:
+    """
+    Convert a bytes object into a human-readable hex dump and ASCII
+    representation.
+
+    This function takes a bytes object as input and provides two different
+    representations of the data. It returns a pair of strings. The first
+    string is a hex dump, where each byte is represented as a two-character
+    hexadecimal value in uppercase. The second string is an ASCII
+    representation, where each byte corresponding to a printable ASCII
+    character is converted to that character. Bytes outside the printable
+    ASCII range are replaced with a specified fill character.
+
+    Args:
+        bytes_obj (bytes): The bytes object to be processed.
+        fill_char (str):   The character to use for bytes outside the
+                            printable ASCII range. Defaults to '.'.
+        hex_fmt (str):     The format string for hex representation. Defaults
+                            to '{:02X}' which is 2-digit uppercase hex
+                            representation.
+
+    Returns:
+        Tuple[str, str]: A pair of strings representing the hex dump and
+                         ASCII representation of the input bytes respectively.
+
+    Example:
+        >>> as_ascii(b'Hello World!', fill_char='.')
+        ('48 65 6C 6C 6F 20 57 6F 72 6C 64 21', 'Hello World!')
+    """
+    hex_dump = " ".join(hex_fmt.format(b) for b in bytes_obj)
+    ascii_chars = [chr(b) if 32 <= b <= 126 else fill_char for b in bytes_obj]
     ascii_representation = ''.join(ascii_chars)
+
     return hex_dump, ascii_representation
 
 
-def join_mixed_list(mixed_list):
-    formatted_list = []
-    for i in mixed_list:
-        if type(i) is int:
-            formatted_list.append('0x{:X}'.format(i))
-        elif type(i) is str:
-            formatted_list.append(i)
-        elif type(i) is bytes:
-            formatted_list.append(i.decode('utf-8'))
-    result = ' '.join(formatted_list)
-    return result
+def join_mixed_list(mixed_list,
+                    int_fmt: str = '0x{:X}',
+                    float_fmt: str = '{:.2f}',
+                    str_fmt: str = '{}',
+                    bytes_fmt: str = '{}',
+                    separator: str = ' ',
+                    formats: dict = None):
+    """
+    Take the list of unpacked values and create a string representation of the data.
+
+    Reasonable defaults are provided for each type.  At
+    """
+
+    # User can optionally provide the types format dictionary.
+    formats = formats or {
+        int: int_fmt,
+        float: float_fmt,
+        str: str_fmt,
+        bytes: lambda b: bytes_fmt.format(b.decode('utf-8')),
+    }
+
+    formatted_list = [
+        formats.get(type(i), str_fmt).format(i) if type(i) != bytes else formats[type(i)](i)
+        for i in mixed_list
+    ]
+
+    return separator.join(formatted_list)
 
 
-# Example Usage
-if __name__ == "__main__":
-    data = ['Hello', 'World', 255,-2, 0xdead, 0x12345678, 0x1234567887654321,0.2,1.2,2.2]
+def debug_function():
+    data = ['Hello', 'World', 255, -2, 0xdead, 0x12345678, 0x1234567887654321, 0.2, 1.2, 2.2]
     print(join_mixed_list(data))
     for order in [ByteOrder.LITTLE_ENDIAN, ByteOrder.BIG_ENDIAN, ByteOrder.NATIVE_ORDER, ByteOrder.NETWORK_ORDER]:
         # Create a BinaryStruct with a 10-character string, 1-byte unsigned integer, and 16-bit unsigned integer
         bs = BinaryStruct(byte_order=order, fields=[String(10), String(10),
-                                                    UInt8(),Int8(), UInt16(), UInt32(), UInt64(),
-                                                    Half(),Float(),Double()])
+                                                    UInt8(), Int8(), UInt16(), UInt32(), UInt64(),
+                                                    Half(), Float(), Double()])
 
         # Pack values
         packed = bs.pack(*data)
@@ -260,3 +323,5 @@ if __name__ == "__main__":
         hex_dump, ascii_repr = as_ascii(packed)
         print(f'Order:{order:<24} HEX {hex_dump} ASCII "{ascii_repr} UNPACKED={unpacked}')
 
+
+debug_function()
