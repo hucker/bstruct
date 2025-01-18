@@ -1,7 +1,17 @@
 # StructLib
 
 `StructLib` is a Python class that offers a more human-friendly interface to the `struct` module,
-allowing packing and unpacking of C-like struct data.
+allowing packing and unpacking of C-like struct data.  StructLib is a thin wrapper on top of
+the `struct` module.  This module provides for human readable packet definitions using intuitive
+strings rather than single character types that allow:
+
+`little_endian ubyte byte uint16 int16 uint32 int32 uint64 int64`
+
+instead of
+
+`<BbHhIiQq`
+
+Some useful binary viewing tools are also provided.
 
 ## Features
 
@@ -28,12 +38,19 @@ unpacked_data = sl.unpack(packed_data)
 The format strings used to initialize `StructLib` are made up of space-separated parts.
 Each part represents a type to be packed/unpacked.
 Supported types include:
-Integer types: `int8`, `uint8`, `int16`, `uint16`, `int32`, `uint32`, `int64`, `uint64`
-Floating point types: `float`, `double`
-Byte and character: `byte`, `ubyte`, `char`
-Strings: `str`, `string`
-Pascal strings: `p`, `pascal`
-Padding: `pad`, `padding`
+
+| Description            | Available Types                                   |
+| ---------------------- | ------------------------------------------------- |
+| Integer Types          | `int8`, `uint8`, `int16`, `uint16`, `int32`, `uint32`, `int64`, `uint64` |
+| Floating Point Types   | `float`, `double`                                 |
+| Byte and Character     | `byte`, `ubyte`, `char`                           |
+| Strings                | `str`, `string`                                   |
+| Pascal Strings         | `p`, `pascal`                                     |
+| Padding                | `pad`, `padding`                                  |
+| Endianness             | `little_endian`, `big_endian`, `network`, `native`|
+
+
+
 To repeat a type, use '' operator followed by number, e.g. `10int32`.
 Endianness can be specified at the beginning of the format string. Supported options are `little_endian`, `
 big_endian`, `network`, and `native`.
@@ -65,3 +82,6 @@ Keep in mind that "str"/"string" type in `StructLib` corresponds to `struct`'s '
 difference between 's' and 'p' in `struct`, you might need to refer to Python's `struct` module documentation.
 Please note that this class provides a simple and limited interface to Python's `struct` module. For complex
 struct packing/unpacking needs, it is recommended to directly use the `struct` module.
+
+
+
