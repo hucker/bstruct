@@ -1,19 +1,59 @@
 
 import struct
+import binascii
 
 class StructLib:
 
     def __init__(self,human_readable_format:str):
-        self.format = self.human_readable_fmt(human_readable_format)
+        self.format = self.decode_human_readable_fmt(human_readable_format)
         self.human_format = human_readable_format
+        self.bytes = b''
+
+
+    def __repr__(self):
+        return f"StructLib(human_readable_format: '{self.human_format} struct_format: {self.format}')"
+
+
+    def to_ascii(self, unprintable_char='.'):
+        """Sometimes looking at strings makes sense."""
+        return ''.join(chr(byte_) if 32 <= byte_ < 127 else unprintable_char for byte_ in self.bytes)
+
+    def to_hex(self, bytes_per_row:int=None, base_address:int=None, address_width:int=8):
+        """
+        Converts the byte array into a formatted string of hexadecimal byte values.
+
+        Args:
+          bytes_per_row (int, optional): The number of bytes to include on each line.
+            Defaults to the length of the byte array (i.e., the entire array on one line).
+          base_address (int, optional): The base memory address for the byte array. If provided,
+            each line will be preceded by the memory address of the first byte of that line,
+            formatted as a hexadecimal number of width address_width. Defaults to None (no addresses displayed).
+          address_width (int, optional): The number of hexadecimal digits to display for the memory address.
+            Defaults to 8.
+
+        Returns:
+            str: A string representing the byte array in hexadecimal, optionally with memory addresses.
+        """
+        bytes_per_row = bytes_per_row or len(self.bytes)
+        hex_string = ''
+
+        for i in range(0, len(self.bytes), bytes_per_row):
+            if base_address is not None:
+                hex_string += f'{base_address + i:0{address_width}X}: '
+            chunk = self.bytes[i:i + bytes_per_row]
+            hex_chunk = binascii.hexlify(chunk).decode('utf-8')
+            hex_string += ' '.join(hex_chunk[j:j + 2] for j in range(0, len(hex_chunk), 2)).upper()
+            hex_string += '\n'
+        return hex_string.rstrip('\n')
 
     def pack(self,*data)->bytes:
-        return struct.pack(self.format,*data)
+        self.bytes = struct.pack(self.format,*data)
+        return self.bytes
 
     def unpack(self,data:bytes)->list:
         return struct.unpack(self.format,data)
 
-    def human_readable_fmt(self, format_string):
+    def decode_human_readable_fmt(self, format_string):
         struct_format_dict = {
             "bool": "?",
             "byte": "b",
@@ -81,3 +121,12 @@ class StructLib:
                     result += struct_format
 
         return result
+
+
+if __name__ == "__main__":
+    sl = StructLib(human_readable_format="big_endian 10*str int32 20*str")
+    b = sl.pack(*[b"hello",32,b"world"])
+    print(sl.to_ascii())
+    print(sl.to_hex(bytes_per_row=8,base_address=0x1000,address_width=4))
+    print(sl.to_hex(bytes_per_row=4))
+    print(sl)

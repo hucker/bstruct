@@ -241,3 +241,22 @@ def test_pascal_strings(bstruct_byte_order, struct_byte_order, bstruct_format, s
     unpacked_data_by_struct = struct.unpack(struct_byte_order + struct_format, packed_data_by_struct)
 
     assert unpacked_data_by_bs == unpacked_data_by_struct
+
+@pytest.mark.parametrize(
+    "byte_string, bytes_per_row, base_address, address_width, expected_output",
+    [
+        (b"hello", None, 0x1000, 8, "00001000: 68 65 6C 6C 6F 00 00 00"),
+        (b"hello", None, None, 8, "68 65 6C 6C 6F 00 00 00"),
+        (b"hello", 4, None, 8, "68 65 6C 6C\n6F 00 00 00"),
+        (b"hello", 2, None, 8, "68 65\n6C 6C\n6F 00\n00 00"),
+        (b"goodbye", None, None, 8, "67 6F 6F 64 62 79 65 00"),
+        (b"goodbye", 5, None, 8, "67 6F 6F 64 62\n79 65 00"),
+
+    ],
+)
+def test_to_hex(byte_string, bytes_per_row, base_address, address_width, expected_output):
+    byte_string = byte_string.ljust((len(byte_string) + 7) // 8 * 8, b'\0')  # Pad to a multiple of 8 bytes
+    sl = bstruct.StructLib(human_readable_format="big_endian 8*str")
+    b = sl.pack(*[byte_string])
+    hex_output = sl.to_hex(bytes_per_row=bytes_per_row, base_address=base_address, address_width=address_width)
+    assert hex_output == expected_output
