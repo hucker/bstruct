@@ -51,16 +51,18 @@ Supported types include:
 
 
 
-To repeat a type, use '' operator followed by number, e.g. `10int32`.
+To repeat a type, use `*` operator followed by number, e.g. `10*int32` to specify that you want to
+handle 10 integers.
+
 Endianness can be specified at the beginning of the format string. Supported options are `little_endian`, `
 big_endian`, `network`, and `native`.
 
 ## Support for hex output.
 
-Since we often need to look at binary data a way to print data in hex is provided with the to_hex method:
+Since we often need to look at binary data a way to print data in hex is provided with the `to_hex` method:
 
-If you just call to_hex on the object you just get all of the bytes in 2 digit uper case, in a long string.  
-Thankfull, to_hex allows for alot of functionality. You can specify bytes per row, a base address and the 
+If you just call `to_hex` on the object you just get all the bytes in 2 digit uper case, in a long string.  
+Thankfully, `to_hex` allows for alot of functionality. You can specify bytes per row, a base address and the 
 width of address data.  This is very useful for larger data objects.
 ```
 bs.to_hex(bytes_per_row:int=8, base_address:int=0x1000, address_width:int=8)
@@ -77,9 +79,9 @@ bs.to_hex(bytes_per_row:int=8, base_address:int=0x1000, address_width:int=8)
 
 This class raises exceptions consistent with Python's `struct` module. So, when you are using `StructLib`,
 you might need to handle the same exceptions that you would when using `struct`.
-Keep in mind that "str"/"string" type in `StructLib` corresponds to `struct`'s 's' format
-(fixed-size string), and "p"/"pascal" corresponds to `struct`'s 'p' format (Pascal string). For the
-difference between 's' and 'p' in `struct`, you might need to refer to Python's `struct` module documentation.
+Keep in mind that `str`/`string` type in `StructLib` corresponds to the `struct` `s` format
+(fixed-size string), and `p`/`pascal` corresponds to the `struct` `p` format (Pascal string). For the
+difference between `s` and `p` in `struct`, you might need to refer to Python's `struct` module documentation.
 Please note that this class provides a simple and limited interface to Python's `struct` module. For complex
 struct packing/unpacking needs, it is recommended to directly use the `struct` module.
 
