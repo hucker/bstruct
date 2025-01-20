@@ -60,7 +60,8 @@ big_endian`, `network`, and `native`.
 ## Support for hex output.
 
 Since we often need to look at binary data a way to print data in hex I've provided a simple
-library that converts binary data "packets" into a formatted hex output.
+library that converts binary data "packets" into a formatted hex output.  When displaying data as
+bytes you can optionally show the data as text in a 'standard' hex dump.
 
 
 ### Examples:
@@ -68,9 +69,9 @@ library that converts binary data "packets" into a formatted hex output.
 Regular hex data as a list of 32 bit hex values.
 
 ```text
-bdata = list(range(0,256))
-ho = HexOut(columns=8,bytes_per_column=4,hex_format='0x{:08X}',addr_format='0x{:02X}: ',show_address=True)
-print(ho.as_hex(bdata))
+>>>bdata = list(range(0,256))
+>>>ho = HexOut(columns=8,bytes_per_column=4,hex_format='0x{:08X}',addr_format='0x{:02X}: ',show_address=True)
+>>>print(ho.as_hex(bdata))
 0x00: 0x00010203 0x04050607 0x08090A0B 0x0C0D0E0F 0x10111213 0x14151617 0x18191A1B 0x1C1D1E1F
 0x20: 0x20212223 0x24252627 0x28292A2B 0x2C2D2E2F 0x30313233 0x34353637 0x38393A3B 0x3C3D3E3F
 0x40: 0x40414243 0x44454647 0x48494A4B 0x4C4D4E4F 0x50515253 0x54555657 0x58595A5B 0x5C5D5E5F
@@ -82,8 +83,8 @@ print(ho.as_hex(bdata))
 ```
 or a list of 8bit hex values
 ```text
-bdata = list(range(0,256))
-print(HexOut(bytes_per_column=1, columns=16,hex_format='{:02X}').as_hex(bdata))
+>>>bdata = list(range(0,256))
+>>>print(HexOut(bytes_per_column=1, columns=16,hex_format='{:02X}').as_hex(bdata))
 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F
 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F
@@ -101,14 +102,30 @@ D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 DA DB DC DD DE DF
 E0 E1 E2 E3 E4 E5 E6 E7 E8 E9 EA EB EC ED EE EF
 F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF
 ```
-of
+or
 
 ```text
-bdata = list(range(0,32))
-print(HexOut(bytes_per_column=4, columns=4,hex_format='{:08X}').as_hex(bdata))
+>>>bdata = list(range(0,32))
+>>>print(HexOut(bytes_per_column=4, columns=4,hex_format='{:08X}').as_hex(bdata))
 00010203 04050607 08090A0B 0C0D0E0F
 10111213 14151617 18191A1B 1C1D1E1F
 ```
+
+or even:
+
+```text
+>>>print(HexOut(show_ascii=True,columns=32).as_hex(range(0,256)))
+00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F ................................
+20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F 30 31 32 33 34 35 36 37 38 39 3A 3B 3C 3D 3E 3F  !"#$%&'()*+,-./0123456789:;<=>?
+40 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D 4E 4F 50 51 52 53 54 55 56 57 58 59 5A 5B 5C 5D 5E 5F @ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_
+60 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F 70 71 72 73 74 75 76 77 78 79 7A 7B 7C 7D 7E 7F `abcdefghijklmnopqrstuvwxyz{|}~.
+80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F 90 91 92 93 94 95 96 97 98 99 9A 9B 9C 9D 9E 9F ................................
+A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 BA BB BC BD BE BF ................................
+C0 C1 C2 C3 C4 C5 C6 C7 C8 C9 CA CB CC CD CE CF D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 DA DB DC DD DE DF ................................
+E0 E1 E2 E3 E4 E5 E6 E7 E8 E9 EA EB EC ED EE EF F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF ................................
+```
+
+If data is provided that is out of range for bytes (0-255) a `ValueError` exception is thrown.
 
 ## Note
 
