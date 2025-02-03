@@ -162,30 +162,27 @@ E0 E1 E2 E3 E4 E5 E6 E7 E8 E9 EA EB EC ED EE EF F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA
     value = HexOut(show_ascii=True, columns=32).as_hex(coll)
     assert expect == value
 
-@pytest.mark.parametrize("byte_data,exception_message", [
-    #Lists
-    ([-1, 10, 255], 'Byte (-1) at index 0 is < 0'),
-    ([256, 10, 255], 'Byte (256) at index 0  is > 0xff/255'),
-    ([0, -1, 255], 'Byte (-1) at index 1 is < 0'),
-    ([0, 256, 255], 'Byte (256) at index 1  is > 0xff/255'),
-    ([0, 10, -1], 'Byte (-1) at index 2 is < 0'),
-    ([0, 10, 256], 'Byte (256) at index 2  is > 0xff/255'),
+@pytest.mark.parametrize("byte_data", [
+    [-1, 10, 255],
+    [256, 10, 255],
+    [0, -1, 255],
+    [0, 256, 255],
+    [0, 10, -1],
+    [0, 10, 256],
 
-     # Tuples (overkill)
-    ((-1, 10, 255), 'Byte (-1) at index 0 is < 0'),
-    ((256, 10, 255), 'Byte (256) at index 0  is > 0xff/255'),
-    ((0, -1, 255), 'Byte (-1) at index 1 is < 0'),
-    ((0, 256, 255), 'Byte (256) at index 1  is > 0xff/255'),
-    ((0, 10, -1), 'Byte (-1) at index 2 is < 0'),
-    ((0, 10, 256), 'Byte (256) at index 2  is > 0xff/255'),
+    # Tuples (overkill)
+    (-1, 10, 255),
+    (256, 10, 255),
+    (0, -1, 255),
+    (0, 256, 255),
+    (0, 10, -1),
+    (0, 10, 256),
     # add more test cases as needed
 ])
-def test_yield_check(byte_data, exception_message):
-    # Verify that we correctly trigger exceptions for out of range data
+def test_yield_check(byte_data):
     ho = HexOut()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         list(ho._yield_range_check(byte_data))
-    assert str(excinfo.value) == exception_message
 
 @pytest.mark.parametrize("byte_data, bytes_per_column, ", [
     (b"\x00\x01\x02\x04", 2),

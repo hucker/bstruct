@@ -1,6 +1,6 @@
 import binascii
 import struct
-
+import hexout
 
 class LibStruct:
 
@@ -32,17 +32,11 @@ class LibStruct:
         Returns:
             str: A string representing the byte array in hexadecimal, optionally with memory addresses.
         """
-        bytes_per_row = bytes_per_row or len(self.bytes)
-        hex_string = ''
+        ho = hexout.HexOut(bytes_per_row=bytes_per_row,
+                           base_address=base_address,
+                           address_width=address_width)
 
-        for i in range(0, len(self.bytes), bytes_per_row):
-            if base_address is not None:
-                hex_string += f'{base_address + i:0{address_width}X}: '
-            chunk = self.bytes[i:i + bytes_per_row]
-            hex_chunk = binascii.hexlify(chunk).decode('utf-8')
-            hex_string += ' '.join(hex_chunk[j:j + 2] for j in range(0, len(hex_chunk), 2)).upper()
-            hex_string += '\n'
-        return hex_string.rstrip('\n')
+        return ho.to_hex(self.bytes)
 
     def pack(self, *data) -> bytes:
         self.bytes = struct.pack(self.format, *data)
