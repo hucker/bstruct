@@ -10,7 +10,7 @@ class LibStruct:
         self.bytes = b''
 
     def __repr__(self):
-        return f"StructLib(human_readable_format: '{self.human_format} struct_format: {self.format}')"
+        return f"LibStruct(human_readable_format: '{self.human_format} struct_format: {self.format}')"
 
     def to_ascii(self, unprintable_char='.'):
         """Sometimes looking at strings makes sense."""

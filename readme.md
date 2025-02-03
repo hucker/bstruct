@@ -1,7 +1,7 @@
-# StructLib
+# LibStruct
 
-`StructLib` is a Python class that offers a more human-friendly interface to the `struct` module,
-allowing packing and unpacking of C-like struct data.  StructLib is a thin wrapper on top of
+`LibStruct` is a Python class that offers a more human-friendly interface to the `struct` module,
+allowing packing and unpacking of C-like struct data.  `LibStruct` is a thin wrapper on top of
 the `struct` module.  This module provides for human readable packet definitions using intuitive
 strings rather than single character types that allow:
 
@@ -129,9 +129,9 @@ If data is provided that is out of range for bytes (0-255) a `ValueError` except
 
 ## Note
 
-This class raises exceptions consistent with Python's `struct` module. So, when you are using `StructLib`,
+This class raises exceptions consistent with Python's `struct` module. So, when you are using `LibStruct`,
 you might need to handle the same exceptions that you would when using `struct`.
-Keep in mind that `str`/`string` type in `StructLib` corresponds to the `struct` `s` format
+Keep in mind that `str`/`string` type in `LibStruct` corresponds to the `struct` `s` format
 (fixed-size string), and `p`/`pascal` corresponds to the `struct` `p` format (Pascal string). For the
 difference between `s` and `p` in `struct`, you might need to refer to Python's `struct` module documentation.
 Please note that this class provides a simple and limited interface to Python's `struct` module. For complex
