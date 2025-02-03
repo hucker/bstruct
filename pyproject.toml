@@ -10,7 +10,7 @@ maintainers = [
 ]
 description = "Wrapper for struct module to simplify binary data"
 readme = "readme.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -21,7 +21,7 @@ license-files = ["LICEN[CS]E*"]
 
 
 [project.urls]
-Homepage = "https://github.com/hucker233/bstruct"
+Homepage = "https://github.com/hucker233/libstruct"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -38,10 +38,10 @@ your-script = 'yourpackage:main'
 
 [[tool.poetry.source]]
 name = "pypi"
-url = "https://pypi.org/bstruct"
+url = "https://pypi.org/libstruct"
 secondary = true
 
 [[tool.uv.index]]
 name = "pypi"
-url = "https://test.pypi.org/bstruct/"
-publish-url = "https://test.pypi.org/bstruct/"
+url = "https://test.pypi.org/libstruct/"
+publish-url = "https://test.pypi.org/libstruct/"
