@@ -1,24 +1,22 @@
-
-import struct
 import binascii
+import struct
 
-class StructLib:
 
-    def __init__(self,human_readable_format:str):
+class LibStruct:
+
+    def __init__(self, human_readable_format: str):
         self.format = self.decode_human_readable_fmt(human_readable_format)
         self.human_format = human_readable_format
         self.bytes = b''
 
-
     def __repr__(self):
         return f"StructLib(human_readable_format: '{self.human_format} struct_format: {self.format}')"
-
 
     def to_ascii(self, unprintable_char='.'):
         """Sometimes looking at strings makes sense."""
         return ''.join(chr(byte_) if 32 <= byte_ < 127 else unprintable_char for byte_ in self.bytes)
 
-    def to_hex(self, bytes_per_row:int=None, base_address:int=None, address_width:int=8):
+    def to_hex(self, bytes_per_row: int = None, base_address: int = None, address_width: int = 8):
         """
         Converts the byte array into a formatted string of hexadecimal byte values.
 
@@ -46,38 +44,38 @@ class StructLib:
             hex_string += '\n'
         return hex_string.rstrip('\n')
 
-    def pack(self,*data)->bytes:
-        self.bytes = struct.pack(self.format,*data)
+    def pack(self, *data) -> bytes:
+        self.bytes = struct.pack(self.format, *data)
         return self.bytes
 
-    def unpack(self,data:bytes)->list:
-        return struct.unpack(self.format,data)
+    def unpack(self, data: bytes) -> list:
+        return struct.unpack(self.format, data)
 
     def decode_human_readable_fmt(self, format_string):
         struct_format_dict = {
             "bool": "?",
             "byte": "b",
-            "int8":"b",
+            "int8": "b",
             "ubyte": "B",
-            "uint8":"B",
-            "int16":"h",
-            "uint16":"H",
-            "int32":"i",
-            "uint32":"I",
+            "uint8": "B",
+            "int16": "h",
+            "uint16": "H",
+            "int32": "i",
+            "uint32": "I",
             "int64": "q",
             "uint64": "Q",
             "float": "f",
             "double": "d",
             "char": "c",
             "s": "s",
-            "string":"s",
-            "str":"s",
+            "string": "s",
+            "str": "s",
             "p": "p",
-            "pascal":"p",
+            "pascal": "p",
             "P": "P",
-            "pointer":"P",
+            "pointer": "P",
             "padding": "x",
-            "pad":'x',
+            "pad": 'x',
         }
 
         endianess_flag = {
@@ -124,9 +122,9 @@ class StructLib:
 
 
 if __name__ == "__main__":
-    sl = StructLib(human_readable_format="big_endian 10*str int32 20*str")
-    b = sl.pack(*[b"hello",32,b"world"])
+    sl = LibStruct(human_readable_format="big_endian 10*str int32 20*str")
+    b = sl.pack(*[b"hello", 32, b"world"])
     print(sl.to_ascii())
-    print(sl.to_hex(bytes_per_row=8,base_address=0x1000,address_width=4))
+    print(sl.to_hex(bytes_per_row=8, base_address=0x1000, address_width=4))
     print(sl.to_hex(bytes_per_row=4))
     print(sl)

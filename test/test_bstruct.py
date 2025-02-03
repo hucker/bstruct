@@ -12,7 +12,7 @@ pack and unpack.  I am not trying to validate struct and assume that it just wor
 
 """
 
-import bstruct
+import libstruct
 import struct
 import pytest
 
@@ -73,7 +73,7 @@ def test_compile_format_string(struct_byte_order, bstruct_byte_order,
 
     bstruct_format_with_order = f"{bstruct_byte_order} {bstruct_format_field}"
     expected_struct_format_full = f"{struct_byte_order}{expected_bstruct_structure}"
-    bs = bstruct.StructLib(bstruct_format_with_order)
+    bs = libstruct.LibStruct(bstruct_format_with_order)
     actual_struct_format_full = bs.format
     assert actual_struct_format_full == expected_struct_format_full
 
@@ -103,7 +103,7 @@ def test_round_trip2(struct_byte_order, bstruct_byte_order):
     test_uint64 = 18446744073709551615
     test_int64 = -9223372036854775808
 
-    bs = bstruct.StructLib(bstruct_format)
+    bs = libstruct.LibStruct(bstruct_format)
 
     assert bs.format == expected_struct_format
 
@@ -138,7 +138,7 @@ def test_round_trip2(struct_byte_order, bstruct_byte_order):
     ],
 )
 def test_round_trip(bstruct_format, struct_format, test_data):
-    bs = bstruct.StructLib(bstruct_format)
+    bs = libstruct.LibStruct(bstruct_format)
 
     assert bs.format == struct_format
 
@@ -158,7 +158,7 @@ def test_strings():
     struct_format_with_order = "<c10s"
     test_data = [b'a', b'hello']
 
-    bs = bstruct.StructLib(bstruct_format_with_order)
+    bs = libstruct.LibStruct(bstruct_format_with_order)
 
     assert bs.format == struct_format_with_order
 
@@ -187,7 +187,7 @@ def test_strings():
     ("char 7*s", "c7s", [b'a', b'abcd123']),
 ])
 def test_strings2(bstruct_byte_order, struct_byte_order, bstruct_format, struct_format, data):
-    bs = bstruct.StructLib(bstruct_byte_order + " " + bstruct_format)
+    bs = libstruct.LibStruct(bstruct_byte_order + " " + bstruct_format)
 
     assert bs.format == struct_byte_order + struct_format
 
@@ -228,7 +228,7 @@ def test_pascal_strings(bstruct_byte_order, struct_byte_order, bstruct_format, s
         data: The data to be packed and unpacked.
     """
 
-    bs = bstruct.StructLib(bstruct_byte_order + " " + bstruct_format)
+    bs = libstruct.LibStruct(bstruct_byte_order + " " + bstruct_format)
 
     assert bs.format == struct_byte_order + struct_format
 
@@ -256,7 +256,7 @@ def test_pascal_strings(bstruct_byte_order, struct_byte_order, bstruct_format, s
 )
 def test_to_hex(byte_string, bytes_per_row, base_address, address_width, expected_output):
     byte_string = byte_string.ljust((len(byte_string) + 7) // 8 * 8, b'\0')  # Pad to a multiple of 8 bytes
-    sl = bstruct.StructLib(human_readable_format="big_endian 8*str")
+    sl = libstruct.LibStruct(human_readable_format="big_endian 8*str")
     b = sl.pack(*[byte_string])
     hex_output = sl.to_hex(bytes_per_row=bytes_per_row, base_address=base_address, address_width=address_width)
     assert hex_output == expected_output

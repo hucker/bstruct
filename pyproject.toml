@@ -1,0 +1,47 @@
+
+[project]
+name = "libstruct"
+version = "0.0.1"
+authors = [
+  { name="Chuck Bass", email="chuck@arcocad.net" },
+]
+maintainers = [
+  { name="Chuck Bass", email="chuck@arcocad.net" },
+]
+description = "Wrapper for struct module to simplify binary data"
+readme = "readme.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+
+[project.urls]
+Homepage = "https://github.com/hucker233/bstruct"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^6.2"
+
+[tool.poetry.scripts]
+your-script = 'yourpackage:main'
+
+[[tool.poetry.source]]
+name = "pypi"
+url = "https://pypi.org/bstruct"
+secondary = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://test.pypi.org/bstruct/"
+publish-url = "https://test.pypi.org/bstruct/"
