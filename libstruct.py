@@ -1,5 +1,7 @@
 import struct
+
 import hexout
+
 
 class LibStruct:
 
@@ -15,27 +17,32 @@ class LibStruct:
         """Sometimes looking at strings makes sense."""
         return ''.join(chr(byte_) if 32 <= byte_ < 127 else unprintable_char for byte_ in self.bytes)
 
-    def to_hex(self, bytes_per_row: int = None, base_address: int = None, address_width: int = 8):
+    def as_hex(self,
+               columns: int = None,
+               bytes_per_column=1,
+               base_address: int = 0,
+               addr_format: str = "{:02X} ",
+               hex_format: str = "{:02X}",
+               show_ascii: bool = False,
+               show_address: bool = True):
         """
-        Converts the byte array into a formatted string of hexadecimal byte values.
+        Converts the byte array into a formatted string of hexadecimal byte values using the
+        hexout package, using reasonable defaults for this application.
 
         Args:
-          bytes_per_row (int, optional): The number of bytes to include on each line.
-            Defaults to the length of the byte array (i.e., the entire array on one line).
-          base_address (int, optional): The base memory address for the byte array. If provided,
-            each line will be preceded by the memory address of the first byte of that line,
-            formatted as a hexadecimal number of width address_width. Defaults to None (no addresses displayed).
-          address_width (int, optional): The number of hexadecimal digits to display for the memory address.
-            Defaults to 8.
+          See hexout library for more information.
 
         Returns:
             str: A string representing the byte array in hexadecimal, optionally with memory addresses.
         """
-        ho = hexout.HexOut(columns=bytes_per_row,
-                           bytes_per_column=1,
+
+        ho = hexout.HexOut(columns=columns,
+                           bytes_per_column=bytes_per_column,
                            base_address=base_address,
-                           addr_format="0x{:0" + str(address_width) + "X} ",
-                           show_address=True)
+                           addr_format=addr_format,
+                           show_address=show_address,
+                           hex_format=hex_format,
+                           show_ascii=show_ascii)
 
         return ho.as_hex(self.bytes)
 
@@ -46,7 +53,8 @@ class LibStruct:
     def unpack(self, data: bytes) -> list:
         return struct.unpack(self.format, data)
 
-    def decode_human_readable_fmt(self, format_string):
+    @staticmethod
+    def decode_human_readable_fmt(format_string):
         struct_format_dict = {
             "bool": "?",
             "byte": "b",
@@ -73,7 +81,7 @@ class LibStruct:
             "pad": 'x',
         }
 
-        endianess_flag = {
+        endian_flag = {
             "little_endian": "<",
             "big_endian": ">",
             "network": "!",
@@ -86,9 +94,9 @@ class LibStruct:
         # Split string into parts
         parts = format_string.split()
 
-        # Handle endianess
-        if parts[0] in endianess_flag:
-            result += endianess_flag[parts.pop(0)]
+        # Handle endian-ness
+        if parts[0] in endian_flag:
+            result += endian_flag[parts.pop(0)]
 
         # Handle types and repetition
         for part in parts:
@@ -114,4 +122,3 @@ class LibStruct:
                     result += struct_format
 
         return result
-
