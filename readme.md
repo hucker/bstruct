@@ -23,10 +23,10 @@ Supports specification of endianness in format strings using terms like `little_
 ## Basic Usage
 
 ```python 
-from structlib import StructLib
+from libstruct import LibStruct
 
 # Initialize with a format string
-sl = StructLib("bool int32 str")
+sl = LibStruct("bool int32 str")
 # Pack data into bytes
 packed_data = sl.pack(True, 123, b"Hello")
 # Unpack bytes into data
@@ -35,7 +35,7 @@ unpacked_data = sl.unpack(packed_data)
 
 ## Format Strings
 
-The format strings used to initialize `StructLib` are made up of space-separated parts.
+The format strings used to initialize `LibStruct` are made up of space-separated parts.
 Each part represents a type to be packed/unpacked.
 Supported types include:
 
