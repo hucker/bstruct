@@ -1,7 +1,7 @@
 
 [project]
 name = "libstruct"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="Chuck Bass", email="chuck@arcocad.net" },
 ]

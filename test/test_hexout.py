@@ -1,6 +1,14 @@
+"""
+These tests are really no longer needed sinsche hexout was created as a separate modlue.
+They are kept here for completeness, but really they can be removed.
+"""
+
 import pytest
 import math
 from hexout import HexOut
+
+
+
 
 @pytest.fixture
 def byte_data():

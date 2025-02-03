@@ -1,4 +1,3 @@
-import binascii
 import struct
 import hexout
 
@@ -10,7 +9,7 @@ class LibStruct:
         self.bytes = b''
 
     def __repr__(self):
-        return f"LibStruct(human_readable_format: '{self.human_format} struct_format: {self.format}')"
+        return f"LibStruct(human_readable_format: '{self.human_format}' struct_format: '{self.format}')"
 
     def to_ascii(self, unprintable_char='.'):
         """Sometimes looking at strings makes sense."""
@@ -32,11 +31,13 @@ class LibStruct:
         Returns:
             str: A string representing the byte array in hexadecimal, optionally with memory addresses.
         """
-        ho = hexout.HexOut(bytes_per_row=bytes_per_row,
+        ho = hexout.HexOut(columns=bytes_per_row,
+                           bytes_per_column=1,
                            base_address=base_address,
-                           address_width=address_width)
+                           addr_format="0x{:0" + str(address_width) + "X} ",
+                           show_address=True)
 
-        return ho.to_hex(self.bytes)
+        return ho.as_hex(self.bytes)
 
     def pack(self, *data) -> bytes:
         self.bytes = struct.pack(self.format, *data)
@@ -114,11 +115,3 @@ class LibStruct:
 
         return result
 
-
-if __name__ == "__main__":
-    sl = LibStruct(human_readable_format="big_endian 10*str int32 20*str")
-    b = sl.pack(*[b"hello", 32, b"world"])
-    print(sl.to_ascii())
-    print(sl.to_hex(bytes_per_row=8, base_address=0x1000, address_width=4))
-    print(sl.to_hex(bytes_per_row=4))
-    print(sl)

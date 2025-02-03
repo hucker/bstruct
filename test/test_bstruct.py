@@ -242,3 +242,39 @@ def test_pascal_strings(bstruct_byte_order, struct_byte_order, bstruct_format, s
 
     assert unpacked_data_by_bs == unpacked_data_by_struct
 
+@pytest.mark.parametrize("fmt, data, bytes_per_row, base_address, address_width, expected", [
+    ("5*s", [b'hello'], 5, 0, 2, '0x00 68 65 6C 6C 6F'),
+    # Add more scenarios here
+    ("4*s", [b'some'], 4, 0x1234, 4, '0x1234 73 6F 6D 65')
+])
+def test_bstruct_hexout(fmt, data, bytes_per_row, base_address, address_width, expected):
+    bs = libstruct.LibStruct(fmt)
+    bs.pack(*data)
+    hex_str = bs.to_hex(bytes_per_row=bytes_per_row, base_address=base_address, address_width=address_width)
+    assert hex_str == expected
+
+
+@pytest.mark.parametrize("fmt, expected_str", [
+    ("5*int32", "LibStruct(human_readable_format: '5*int32' struct_format: '5i')"),
+    ("5*uint8", "LibStruct(human_readable_format: '5*uint8' struct_format: '5B')"),
+    ("2*float", "LibStruct(human_readable_format: '2*float' struct_format: '2f')"),
+    ("6*double", "LibStruct(human_readable_format: '6*double' struct_format: '6d')"),
+    ("3*int16", "LibStruct(human_readable_format: '3*int16' struct_format: '3h')"),
+])
+def test_bstruct_repr(fmt, expected_str):
+    bs = libstruct.LibStruct(fmt)
+    assert str(bs) == expected_str
+
+@pytest.mark.parametrize("struct_format, data, expected, fill", [
+    ("10*s", b"hello", "hello.....",'.'),
+    ("5*s", b"hi", "hi...",'.'),
+    ("15*s", b"help me", "help me........",'.'),
+    ("10*s", b"", "----------",'-'),
+    ("15*s", b"hello world", "hello worldXXXX",'X'),
+])
+def test_ascii(struct_format, data, expected,fill):
+    bs = libstruct.LibStruct(struct_format)
+    bs.pack(data)
+    ascii = bs.to_ascii(unprintable_char=fill)
+    assert ascii == expected
+
